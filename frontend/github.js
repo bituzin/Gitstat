@@ -54,29 +54,42 @@ window.addEventListener("DOMContentLoaded", async () => {
   const resultDiv = document.getElementById("ghResult") || document.getElementById("ghResultAuto");
   if (!resultDiv) return;
   resultDiv.innerHTML = '<div class="loading">Ładowanie danych użytkowników...</div>';
+  let tableRows = "";
   const results = await Promise.all(githubUsers.map(async username => {
     try {
       const userRes = await fetch(`https://api.github.com/users/${username}`);
       if (!userRes.ok) throw new Error("Nie znaleziono użytkownika");
       const user = await userRes.json();
-      // Liczba publicznych repozytoriów
       const publicRepos = user.public_repos;
-      // Liczba PR i commitów z eventów
       const eventsRes = await fetch(`https://api.github.com/users/${username}/events/public`);
       const events = eventsRes.ok ? await eventsRes.json() : [];
       const prCount = events.filter(ev => ev.type === "PullRequestEvent").length;
       const commitCount = events.filter(ev => ev.type === "PushEvent").reduce((acc, ev) => acc + (ev.payload.commits ? ev.payload.commits.length : 0), 0);
-      return `
-        <div class="user-card">
-          <span class="username">${user.login}</span>
-          <div>Liczba publicznych repozytoriów: <strong>${publicRepos}</strong></div>
-          <div>Liczba PR (ostatnie eventy): <strong>${prCount}</strong></div>
-          <div>Liczba commitów (ostatnie eventy): <strong>${commitCount}</strong></div>
-        </div>
-      `;
+      tableRows += `<tr>
+        <td><a href="https://github.com/${user.login}" target="_blank">${user.login}</a></td>
+        <td>${publicRepos}</td>
+        <td>${prCount}</td>
+        <td>${commitCount}</td>
+      </tr>`;
+      return "";
     } catch (err) {
-      return `<div class="error">${username}: ${err.message}</div>`;
+      tableRows += `<tr><td colspan="4" class="error">${username}: ${err.message}</td></tr>`;
+      return "";
     }
   }));
-  resultDiv.innerHTML = results.join('');
+  resultDiv.innerHTML = `
+    <table style="width:100%;border-collapse:collapse;text-align:center;">
+      <thead>
+        <tr>
+          <th>GitHub Username</th>
+          <th>Public Repos</th>
+          <th>Pull Requests (recent)</th>
+          <th>Commits (recent)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+      </tbody>
+    </table>
+  `;
 });
