@@ -46,3 +46,37 @@ document.getElementById("ghForm").addEventListener("submit", async function(e) {
     resultDiv.innerHTML = `<div class="error">${err.message}</div>`;
   }
 });
+
+// Automatyczne pobieranie danych dla podanych kont po załadowaniu strony
+const githubUsers = ["bituzin"];
+
+window.addEventListener("DOMContentLoaded", async () => {
+  const resultDiv = document.getElementById("ghResult") || document.getElementById("ghResultAuto");
+  if (!resultDiv) return;
+  resultDiv.innerHTML = '<div class="loading">Ładowanie danych użytkowników...</div>';
+  const results = await Promise.all(githubUsers.map(async username => {
+    try {
+      const userRes = await fetch(`https://api.github.com/users/${username}`);
+      if (!userRes.ok) throw new Error("Nie znaleziono użytkownika");
+      const user = await userRes.json();
+      // Liczba publicznych repozytoriów
+      const publicRepos = user.public_repos;
+      // Liczba PR i commitów z eventów
+      const eventsRes = await fetch(`https://api.github.com/users/${username}/events/public`);
+      const events = eventsRes.ok ? await eventsRes.json() : [];
+      const prCount = events.filter(ev => ev.type === "PullRequestEvent").length;
+      const commitCount = events.filter(ev => ev.type === "PushEvent").reduce((acc, ev) => acc + (ev.payload.commits ? ev.payload.commits.length : 0), 0);
+      return `
+        <div class="user-card">
+          <span class="username">${user.login}</span>
+          <div>Liczba publicznych repozytoriów: <strong>${publicRepos}</strong></div>
+          <div>Liczba PR (ostatnie eventy): <strong>${prCount}</strong></div>
+          <div>Liczba commitów (ostatnie eventy): <strong>${commitCount}</strong></div>
+        </div>
+      `;
+    } catch (err) {
+      return `<div class="error">${username}: ${err.message}</div>`;
+    }
+  }));
+  resultDiv.innerHTML = results.join('');
+});
