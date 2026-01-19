@@ -50,21 +50,42 @@ document.getElementById("ghForm").addEventListener("submit", async function(e) {
 // Automatyczne pobieranie danych dla podanych kont po załadowaniu strony
 const githubUsers = ["bituzin"];
 
+function getDateNDaysAgo(days) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString().split('T')[0];
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
   const resultDiv = document.getElementById("ghResult") || document.getElementById("ghResultAuto");
   if (!resultDiv) return;
   resultDiv.innerHTML = '<div class="loading">Ładowanie danych użytkowników...</div>';
   let tableRows = "";
+  const since = getDateNDaysAgo(7);
+  const until = new Date().toISOString().split('T')[0];
   const results = await Promise.all(githubUsers.map(async username => {
     try {
+      // Public repos
       const userRes = await fetch(`https://api.github.com/users/${username}`);
       if (!userRes.ok) throw new Error("Nie znaleziono użytkownika");
       const user = await userRes.json();
       const publicRepos = user.public_repos;
-      const eventsRes = await fetch(`https://api.github.com/users/${username}/events/public`);
-      const events = eventsRes.ok ? await eventsRes.json() : [];
-      const prCount = events.filter(ev => ev.type === "PullRequestEvent").length;
-      const commitCount = events.filter(ev => ev.type === "PushEvent").reduce((acc, ev) => acc + (ev.payload.commits ? ev.payload.commits.length : 0), 0);
+      // PR count (last 7 days)
+      const prRes = await fetch(`https://api.github.com/search/issues?q=type:pr+author:${username}+created:${since}..${until}`);
+      const prData = prRes.ok ? await prRes.json() : { total_count: 0 };
+      const prCount = prData.total_count || 0;
+      // Commits (last 7 days, all repos)
+      // 1. Get repos
+      const reposRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=100`);
+      const repos = reposRes.ok ? await reposRes.json() : [];
+      let commitCount = 0;
+      for (const repo of repos) {
+        const commitsRes = await fetch(`https://api.github.com/repos/${repo.owner.login}/${repo.name}/commits?author=${username}&since=${since}T00:00:00Z&until=${until}T23:59:59Z&per_page=100`);
+        if (commitsRes.ok) {
+          const commits = await commitsRes.json();
+          commitCount += Array.isArray(commits) ? commits.length : 0;
+        }
+      }
       tableRows += `<tr>
         <td><a href="https://github.com/${user.login}" target="_blank">${user.login}</a></td>
         <td>${publicRepos}</td>
@@ -83,8 +104,8 @@ window.addEventListener("DOMContentLoaded", async () => {
         <tr>
           <th>GitHub Username</th>
           <th>Public Repos</th>
-          <th>Pull Requests (recent)</th>
-          <th>Commits (recent)</th>
+          <th>Pull Requests (last 7 days)</th>
+          <th>Commits (last 7 days)</th>
         </tr>
       </thead>
       <tbody>
