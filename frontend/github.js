@@ -57,10 +57,11 @@ function getDateNDaysAgo(days) {
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-  const resultDiv = document.getElementById("ghResult") || document.getElementById("ghResultAuto");
+  const resultDiv = document.getElementById("ghResult");
   if (!resultDiv) return;
   resultDiv.innerHTML = '<div class="loading">Ładowanie danych użytkowników...</div>';
   let tableRows = "";
+  let activityRows = "";
   const since = getDateNDaysAgo(7);
   const until = new Date().toISOString().split('T')[0];
   const results = await Promise.all(githubUsers.map(async username => {
@@ -75,7 +76,6 @@ window.addEventListener("DOMContentLoaded", async () => {
       const prData = prRes.ok ? await prRes.json() : { total_count: 0 };
       const prCount = prData.total_count || 0;
       // Commits (last 7 days, all repos)
-      // 1. Get repos
       const reposRes = await fetch(`https://api.github.com/users/${username}/repos?per_page=100`);
       const repos = reposRes.ok ? await reposRes.json() : [];
       let commitCount = 0;
@@ -86,6 +86,13 @@ window.addEventListener("DOMContentLoaded", async () => {
           commitCount += Array.isArray(commits) ? commits.length : 0;
         }
       }
+      // Aktywności (ostatnie eventy) - tylko PR i commity
+      const eventsRes = await fetch(`https://api.github.com/users/${username}/events/public`);
+      const events = eventsRes.ok ? await eventsRes.json() : [];
+      activityRows += events
+        .filter(ev => ev.type === "PullRequestEvent" || ev.type === "PushEvent")
+        .map(ev => `<tr><td>${user.login}</td><td>${ev.type}</td><td><a href='https://github.com/${ev.repo.name}' target='_blank'>${ev.repo.name}</a></td><td>${new Date(ev.created_at).toLocaleString()}</td></tr>`)
+        .join('');
       tableRows += `<tr>
         <td><a href="https://github.com/${user.login}" target="_blank">${user.login}</a></td>
         <td>${publicRepos}</td>
@@ -110,6 +117,20 @@ window.addEventListener("DOMContentLoaded", async () => {
       </thead>
       <tbody>
         ${tableRows}
+      </tbody>
+    </table>
+    <h3>Ostatnie PR i commity użytkownika</h3>
+    <table style="width:100%;border-collapse:collapse;text-align:center;">
+      <thead>
+        <tr>
+          <th>GitHub Username</th>
+          <th>Event Type</th>
+          <th>Repository</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${activityRows}
       </tbody>
     </table>
   `;
