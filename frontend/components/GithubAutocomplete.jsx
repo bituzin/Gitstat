@@ -42,11 +42,11 @@ export default function GithubAutocomplete({ value, onChange, onSelect }) {
         type="text"
         value={value}
         onChange={handleInput}
-        placeholder="np. octocat"
+        placeholder="e.g. octocat"
         autoComplete="off"
         style={{ width: "100%" }}
       />
-      {loading && <div className="loading">Ładowanie...</div>}
+      {loading && <div className="loading">Loading...</div>}
       {suggestions.length > 0 && (
         <ul style={{
           position: "absolute",

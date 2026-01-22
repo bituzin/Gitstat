@@ -27,7 +27,7 @@ export default function App() {
           onChange={setUsername}
           onSelect={handleSelect}
         />
-        <button type="submit">Pobierz dane</button>
+        <button type="submit">Fetch Data</button>
       </form>
       {submitted && <GithubStats username={username} />}
     </div>

@@ -65,7 +65,7 @@ export default function GithubStats({ username }) {
     fetchData();
   }, [username]);
 
-  if (loading) return <div className="loading">Ładowanie danych użytkownika...</div>;
+  if (loading) return <div className="loading">Loading user data...</div>;
   if (error) return <div className="error">{username}: {error}</div>;
   if (!stats) return null;
 
@@ -89,7 +89,7 @@ export default function GithubStats({ username }) {
           </tr>
         </tbody>
       </table>
-      <h3>Ostatnie PR i commity użytkownika</h3>
+      <h3>Latest PRs and commits</h3>
       <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center" }}>
         <thead>
           <tr>
