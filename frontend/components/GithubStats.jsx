@@ -11,6 +11,7 @@ export default function GithubStats({ username }) {
   const [error, setError] = useState("");
   const [stats, setStats] = useState(null);
   const [activity, setActivity] = useState([]);
+  const [filter, setFilter] = useState("all");
 
   useEffect(() => {
     if (!username) return;
@@ -69,8 +70,20 @@ export default function GithubStats({ username }) {
   if (error) return <div className="error">{username}: {error}</div>;
   if (!stats) return null;
 
+  let filteredActivity = activity;
+  if (filter === "pr") filteredActivity = activity.filter(ev => ev.type === "PullRequestEvent");
+  if (filter === "commit") filteredActivity = activity.filter(ev => ev.type === "PushEvent");
+
   return (
     <>
+      <div style={{ margin: "20px 0" }}>
+        <label style={{ marginRight: 10 }}>Filter events:</label>
+        <select value={filter} onChange={e => setFilter(e.target.value)} style={{ padding: "6px", fontSize: "1em" }}>
+          <option value="all">All</option>
+          <option value="pr">Pull Requests</option>
+          <option value="commit">Commits</option>
+        </select>
+      </div>
       <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center" }}>
         <thead>
           <tr>
@@ -100,7 +113,7 @@ export default function GithubStats({ username }) {
           </tr>
         </thead>
         <tbody>
-          {activity.map(ev => {
+          {filteredActivity.map(ev => {
             let icon = null;
             let typeLabel = null;
             if (ev.type === "PullRequestEvent") {
