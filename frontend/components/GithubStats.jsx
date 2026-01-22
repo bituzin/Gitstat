@@ -90,24 +90,35 @@ export default function GithubStats({ username }) {
         </tbody>
       </table>
       <h3>Latest PRs and commits</h3>
-      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center" }}>
-        <thead>
+      <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center", background: "#fff", borderRadius: 8, boxShadow: "0 2px 8px #0001" }}>
+        <thead style={{ background: "#f0f4f8" }}>
           <tr>
-            <th>GitHub Username</th>
-            <th>Event Type</th>
-            <th>Repository</th>
-            <th>Date</th>
+            <th style={{ padding: "10px" }}>User</th>
+            <th style={{ padding: "10px" }}>Type</th>
+            <th style={{ padding: "10px" }}>Repository</th>
+            <th style={{ padding: "10px" }}>Date</th>
           </tr>
         </thead>
         <tbody>
-          {activity.map(ev => (
-            <tr key={ev.id}>
-              <td>{stats.login}</td>
-              <td>{ev.type}</td>
-              <td><a href={`https://github.com/${ev.repo.name}`} target="_blank" rel="noopener noreferrer">{ev.repo.name}</a></td>
-              <td>{new Date(ev.created_at).toLocaleString()}</td>
-            </tr>
-          ))}
+          {activity.map(ev => {
+            let icon = null;
+            let typeLabel = null;
+            if (ev.type === "PullRequestEvent") {
+              icon = <span style={{ color: "#6f42c1", fontSize: "1.2em" }}>🔀</span>;
+              typeLabel = <span style={{ color: "#6f42c1", fontWeight: "bold" }}>Pull Request</span>;
+            } else if (ev.type === "PushEvent") {
+              icon = <span style={{ color: "#2ea44f", fontSize: "1.2em" }}>⬆️</span>;
+              typeLabel = <span style={{ color: "#2ea44f", fontWeight: "bold" }}>Commit</span>;
+            }
+            return (
+              <tr key={ev.id} style={{ borderBottom: "1px solid #eee" }}>
+                <td style={{ padding: "8px" }}>{stats.login}</td>
+                <td style={{ padding: "8px" }}>{icon} {typeLabel}</td>
+                <td style={{ padding: "8px" }}><a href={`https://github.com/${ev.repo.name}`} target="_blank" rel="noopener noreferrer">{ev.repo.name}</a></td>
+                <td style={{ padding: "8px", fontFamily: "monospace" }}>{new Date(ev.created_at).toLocaleString()}</td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </>
