@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import GithubStats from "./components/GithubStats";
+import GithubAutocomplete from "./components/GithubAutocomplete";
 
 export default function App() {
+
   const [username, setUsername] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -10,19 +12,20 @@ export default function App() {
     setSubmitted(true);
   };
 
+  const handleSelect = (selected) => {
+    setUsername(selected);
+    setSubmitted(true);
+  };
+
   return (
     <div className="container">
       <h1>GitHub User Info</h1>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} autoComplete="off">
         <label htmlFor="ghUser">GitHub Username:</label>
-        <input
-          type="text"
-          id="ghUser"
-          name="ghUser"
-          required
-          placeholder="np. octocat"
+        <GithubAutocomplete
           value={username}
-          onChange={e => setUsername(e.target.value)}
+          onChange={setUsername}
+          onSelect={handleSelect}
         />
         <button type="submit">Pobierz dane</button>
       </form>
