@@ -74,6 +74,10 @@ export default function GithubStats({ username }) {
   if (filter === "pr") filteredActivity = activity.filter(ev => ev.type === "PullRequestEvent");
   if (filter === "commit") filteredActivity = activity.filter(ev => ev.type === "PushEvent");
 
+  const prEvents = activity.filter(ev => ev.type === "PullRequestEvent").length;
+  const commitEvents = activity.filter(ev => ev.type === "PushEvent").length;
+  const totalEvents = activity.length;
+
   return (
     <>
       <div style={{ margin: "20px 0" }}>
@@ -83,6 +87,11 @@ export default function GithubStats({ username }) {
           <option value="pr">Pull Requests</option>
           <option value="commit">Commits</option>
         </select>
+      </div>
+      <div style={{ marginBottom: 16, background: "#f0f4f8", borderRadius: 6, padding: 12, display: "flex", gap: 24, justifyContent: "center", fontWeight: "bold" }}>
+        <span>Total events: {totalEvents}</span>
+        <span>PRs: {prEvents}</span>
+        <span>Commits: {commitEvents}</span>
       </div>
       <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center" }}>
         <thead>
